@@ -36,12 +36,11 @@ logo = """
 def text_genirate():
     with open("./text/test.txt", "r", encoding="utf-8") as fl:
         texts = fl.readlines()
-    time_maskc = re.compile(r".{60,90}\s")
     res = random.choice(texts)
-    return len(res), time_maskc.findall(res), res
+    return len(res), res
 
 
-line_length, text_arr, text = text_genirate()
+line_length, text = text_genirate()
 
 
 # Проверка символа на правильность
@@ -51,7 +50,7 @@ line_length, text_arr, text = text_genirate()
 # Возвращает индекс цвета 2, если символ правильный, и 1, если нет
 def text_check(text, new_text, ind):
     if text[ind] == new_text[ind]:
-        return 2
+        return 3
     return 1
 
 
@@ -67,6 +66,7 @@ def percentage_correctness(res):
 
 def main(stdscr):
     curses.curs_set(0)  # Отключение отображения курсора
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_GREEN)
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_RED)  # Цветовая ошиби
     curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)  # Цветовая текста
 
@@ -85,24 +85,37 @@ def main(stdscr):
             sys.exit(0)
 
 
+def text_print(stdscr, _text):
+    # Расчёт начальной позиции текста
+    height, width = stdscr.getmaxyx()
+    start_x = (width - 80) // 2
+    start_y = height // 2
+
+    x = 0
+    y = 0
+    for i, _key in enumerate(_text):
+        if x >= 80 and _text[i-1] == " ":
+            y += 1
+            x = 0
+        stdscr.addstr(start_y + y - 5, start_x + x, _key)
+        x += 1
+
+
 # Функция начала набора текста
 # stdscr - экран curses,
 # duration - время теста в секундах
 def start_spelling(stdscr, duration=30000):
-    new_text_full = ""
     line_id = 0
     new_text = ""
 
-    # Расчёт начальной позиции текста
     height, width = stdscr.getmaxyx()
-    start_x = (width - len(max(text_arr))) // 2
+    start_x = (width - 80) // 2
     start_y = height // 2
+    x = 0
 
     stdscr.clear()
-    # Отображение эталонного текста
-    for ind, tx in enumerate(text_arr):
-        stdscr.addstr(start_y+ind-4, start_x,
-                      tx, curses.color_pair(2))
+    # Отображение текста
+    text_print(stdscr, text)
 
     start_time = time.time()
 
@@ -126,67 +139,49 @@ def start_spelling(stdscr, duration=30000):
                     menu_sped_test(stdscr)
 
         index = len(new_text)
-        character_number_line = len(new_text_full)
 
         match key:
             case "`":
                 sys.exit(0)  # Завершение функции по нажатию `
             case "KEY_BACKSPACE":
+                _x = 0
+                ln = 0
                 # Удаление последнего символа
                 new_text = new_text[:-1]
-                new_text_full = new_text_full[:-1]
                 stdscr.clear()
 
-                for ind, tx in enumerate(text_arr):
-                    stdscr.addstr(start_y+ind-4, start_x,
-                                  tx, curses.color_pair(2))
+                text_print(stdscr, text)
+                for _index, _key in enumerate(new_text):
 
-                if line_id != 0:
-                    i = 0
-                    for _index, _key in enumerate(new_text_full):
-                        if _index >= len(text_arr[i]):
-                            stdscr.addstr(start_y+2,
-                                          start_x + _index+i,
-                                          _key,
-                                          curses.color_pair(text_check(
-                                                                       text,
-                                                                       new_text_full,
-                                                                       _index)))
-                        else:
-                            i +=1
-                else:
-                    for _index, _key in enumerate(new_text):
-                        stdscr.addstr(start_y+2,
-                                      start_x + _index,
-                                      _key,
-                                      curses.color_pair(text_check(
-                                                                   text,
-                                                                   new_text_full,
-                                                                   _index)))
+                    if _x >= 80 and new_text[_index-1] == " ":
+                        ln += 1
+                        _x = 0
+                    stdscr.addstr(start_y+1+ln,
+                                  start_x+_x,
+                                  _key,
+                                  curses.color_pair(text_check(text,
+                                                               new_text,
+                                                               _index)))
+                    _x += 1
+                x = _x
+
             case _:
                 # Добавление символа в пользовательский ввод
-                if len(key) == 1 and line_length != index:
+                if len(key) == 1 and len(text) != index:
                     new_text += key
-                    new_text_full += key
-                    if len(text_arr[line_id]) > len(new_text):
-                        stdscr.addstr(start_y+2+line_id,
-                                      start_x+index,
-                                      key,
-                                      curses.color_pair(text_check(text,
-                                                                   new_text_full,
-                                                                   character_number_line)))
-                    else:
-                        line_id += 1
-                        if line_id > len(text_arr):
-                            return [elapsed_time, percentage_correctness(new_text)]
-                        new_text = key
-                        index = 0
-                        stdscr.addstr(start_y+2+line_id,
-                                      start_x+index,
-                                      key,
-                                      curses.color_pair(text_check(text,
-                                                                   new_text_full,
-                                                                   character_number_line)))
+                    if line_id > len(text):
+                        return [elapsed_time, percentage_correctness(new_text)]
+
+                    if x >= 80 and new_text[index-1] == " ":
+                        line_id +=1
+                        x = 0
+                    stdscr.addstr(start_y+1+line_id,
+                                  start_x+x,
+                                  key,
+                                  curses.color_pair(text_check(text,
+                                                               new_text,
+                                                               index)))
+                    x += 1
 
                 elif len(text) == index:
                     return [elapsed_time, percentage_correctness(new_text)]
