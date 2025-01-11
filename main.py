@@ -15,7 +15,6 @@ import sys
 import time
 import curses
 import random
-import re
 from curses import wrapper
 
 # Стартовый экран приложения
@@ -124,7 +123,7 @@ def main(stdscr):
             start_spelling(stdscr)  # Запуск треножора
             sys.exit(0)
         elif key == "2":
-            menu_sped_test(stdscr)  # Открытие меню тестов
+            menuSpedTest(stdscr)  # Открытие меню тестов
         elif key == "4":
             sys.exit(0)
 
@@ -164,10 +163,9 @@ def start_spelling(stdscr, duration=30000):
     """
     line_id = 0
     new_text = ""
-
-    height, width = stdscr.getmaxyx()
-    start_x = (width - 80) // 2
-    start_y = height // 2
+ 
+    start_x = (stdscr.getmaxyx()[1] - 80) // 2
+    start_y = stdscr.getmaxyx()[0] // 2
     x = 0
 
     stdscr.clear()
@@ -189,11 +187,11 @@ def start_spelling(stdscr, duration=30000):
             stdscr.addstr(3, 5, "1 : Click to try again")
             stdscr.addstr(4, 5, "2 : Press to return to menu")
             while True:
-                key = stdscr.getkey()
+stdscr.getmaxyx()                key = stdscr.getkey()
                 if key == "1":
                     start_spelling(stdscr, duration)
                 elif key == "2":
-                    menu_sped_test(stdscr)
+                    menuSpedTest(stdscr)
 
         index = len(new_text)
 
@@ -246,7 +244,7 @@ def start_spelling(stdscr, duration=30000):
 
 # Меню выбора тестов
 # stdscr - экран curses
-def menu_sped_test(stdscr):
+def menuSpedTest(stdscr):
     """
         Отвечает за проведения теста и вывод его результата
     """
