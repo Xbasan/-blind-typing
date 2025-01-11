@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 
+"""
+main.py
+
+Тренажёр набора текста с использованием библиотеки curses.
+В нём есть главное меню, тесты на скорость набора текста (1 или 30 минут),
+проверка ошибок в вводе и подсчёт процента правильных символов.
+Программа отображает текст для набора и оценивает точность ввода,
+с цветовой индикацией ошибок.
+"""
+
+
 import sys
 import time
 import curses
@@ -8,7 +19,7 @@ import re
 from curses import wrapper
 
 # Стартовый экран приложения
-logo = """
+LOGO = """
   @@@@@@@@   @@@@@@    @@@@@@   @@@@@@@  @@@@@@@@  @@@  @@@  @@@   @@@@@@@@  @@@@@@@@  @@@@@@@    @@@@@@
   @@@@@@@@  @@@@@@@@  @@@@@@@   @@@@@@@  @@@@@@@@  @@@  @@@@ @@@  @@@@@@@@@  @@@@@@@@  @@@@@@@@  @@@@@@@ 
   @@!       @@!  @@@  !@@         @@!    @@!       @@!  @@!@!@@@  !@@        @@!       @@!  @@@  !@@    
@@ -34,6 +45,14 @@ logo = """
 
 # Генирирует текст
 def text_genirate():
+    """
+        Выполняет чтение из файлов с тестом
+
+        Returns:
+            int: длина текта
+            str: текст для тринажора
+    """
+
     with open("./text/test.txt", "r", encoding="utf-8") as fl:
         texts = fl.readlines()
     res = random.choice(texts)
@@ -43,13 +62,28 @@ def text_genirate():
 line_length, text = text_genirate()
 
 
+def new_text_genirate():
+    """Обновляет текст"""
+    line_length, text = text_genirate()
+
+
 # Проверка символа на правильность
 # text - эталонный текст,
 # new_text - пользовательский ввод,
 # ind - индекс символа
 # Возвращает индекс цвета 2, если символ правильный, и 1, если нет
-def text_check(text, new_text, ind):
-    if text[ind] == new_text[ind]:
+def text_check(_text, _new_text, ind):
+    """
+        Выполняет проверку правильности введенного текста.
+
+        Args:
+            str: _text: Этолонный текст.
+            str: _new_text: Новый введенный текст.
+            str: _ind: Номер буквы.
+        Returns:
+            int: 1 при неправильной буквы 3 при правильном.
+    """
+    if _text[ind] == _new_text[ind]:
         return 3
     return 1
 
@@ -57,6 +91,13 @@ def text_check(text, new_text, ind):
 # Подсчёт процента правильных символов в вводе пользователя
 # Возвращает процент правильности
 def percentage_correctness(res):
+    """
+        Проверяет правильности введенного текста
+        Args:
+            res: Страка веденныя пользавотилем
+        Returns:
+            int: Процентное соотношение правильности
+    """
     per = 0
     for ind, symbol in enumerate(res):
         if text[ind] == symbol:
@@ -65,13 +106,16 @@ def percentage_correctness(res):
 
 
 def main(stdscr):
+    """
+        Отрисовывает стартовый экран приложения
+    """
     curses.curs_set(0)  # Отключение отображения курсора
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_GREEN)
-    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_RED)  # Цветовая ошиби
-    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)  # Цветовая текста
+    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_RED)
+    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
 
     stdscr.clear()
-    stdscr.addstr(logo)
+    stdscr.addstr(LOGO)
     stdscr.refresh()
 
     while True:
@@ -86,6 +130,11 @@ def main(stdscr):
 
 
 def text_print(stdscr, _text):
+    """
+        Пичатает на экране приложения текст
+        Args:
+            _text: Текст который нужно вывести
+    """
     # Расчёт начальной позиции текста
     height, width = stdscr.getmaxyx()
     start_x = (width - 80) // 2
@@ -105,6 +154,14 @@ def text_print(stdscr, _text):
 # stdscr - экран curses,
 # duration - время теста в секундах
 def start_spelling(stdscr, duration=30000):
+    """
+        Функция начала набора текста
+        Args:
+            duration: Време длительности теста
+        Returns:
+            int: Затраченное время
+            int: Процент правельности набора
+    """
     line_id = 0
     new_text = ""
 
@@ -173,7 +230,7 @@ def start_spelling(stdscr, duration=30000):
                         return [elapsed_time, percentage_correctness(new_text)]
 
                     if x >= 80 and new_text[index-1] == " ":
-                        line_id +=1
+                        line_id += 1
                         x = 0
                     stdscr.addstr(start_y+1+line_id,
                                   start_x+x,
@@ -190,6 +247,10 @@ def start_spelling(stdscr, duration=30000):
 # Меню выбора тестов
 # stdscr - экран curses
 def menu_sped_test(stdscr):
+    """
+        Отвечает за проведения теста и вывод его результата
+    """
+
     stdscr.clear()
     height, width = stdscr.getmaxyx()
 
