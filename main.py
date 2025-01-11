@@ -135,9 +135,8 @@ def text_print(stdscr, _text):
             _text: Текст который нужно вывести
     """
     # Расчёт начальной позиции текста
-    height, width = stdscr.getmaxyx()
-    start_x = (width - 80) // 2
-    start_y = height // 2
+    start_x = (stdscr.getmaxyx() - 80) // 2
+    start_y = stdscr.getmaxyx() // 2
 
     x = 0
     y = 0
@@ -163,7 +162,7 @@ def start_spelling(stdscr, duration=30000):
     """
     line_id = 0
     new_text = ""
- 
+
     start_x = (stdscr.getmaxyx()[1] - 80) // 2
     start_y = stdscr.getmaxyx()[0] // 2
     x = 0
@@ -187,7 +186,7 @@ def start_spelling(stdscr, duration=30000):
             stdscr.addstr(3, 5, "1 : Click to try again")
             stdscr.addstr(4, 5, "2 : Press to return to menu")
             while True:
-stdscr.getmaxyx()                key = stdscr.getkey()
+                key = stdscr.getkey()
                 if key == "1":
                     start_spelling(stdscr, duration)
                 elif key == "2":
