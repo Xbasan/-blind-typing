@@ -135,8 +135,8 @@ def text_print(stdscr, _text):
             _text: Текст который нужно вывести
     """
     # Расчёт начальной позиции текста
-    start_x = (stdscr.getmaxyx() - 80) // 2
-    start_y = stdscr.getmaxyx() // 2
+    start_x = (stdscr.getmaxyx()[1] - 80) // 2
+    start_y = stdscr.getmaxyx()[0] // 2
 
     x = 0
     y = 0
@@ -146,6 +146,41 @@ def text_print(stdscr, _text):
             x = 0
         stdscr.addstr(start_y + y - 5, start_x + x, _key)
         x += 1
+
+
+def key_delete(stdscr, n_text, y, x):
+    """
+        Отвечааете за стерание симвалов
+
+        Ards:
+            n_text: Принемает строку из симвалов веденных пользоватилем,
+            y: Принемает высота окна,
+            x: Принемае длину окна
+
+        Returns:
+            new_text: n_text без последнего симвала
+            x: позицыя каретки по x
+    """
+    _x = 0
+    ln = 0
+    # Удаление последнего символа
+    new_text = n_text[:-1]
+    stdscr.clear()
+
+    text_print(stdscr, text)
+    for _index, _key in enumerate(new_text):
+        if _x >= 80 and new_text[_index-1] == " ":
+            ln += 1
+            _x = 0
+        stdscr.addstr(y+1+ln,
+                      x+_x,
+                      _key,
+                      curses.color_pair(text_check(text,
+                                                   new_text,
+                                                   _index)))
+        _x += 1
+
+    return new_text, _x
 
 
 # Функция начала набора текста
@@ -197,30 +232,15 @@ def start_spelling(stdscr, duration=30000):
         match key:
             case "`":
                 sys.exit(0)  # Завершение функции по нажатию `
+
             case "KEY_BACKSPACE":
-                _x = 0
-                ln = 0
-                # Удаление последнего символа
-                new_text = new_text[:-1]
-                stdscr.clear()
-
-                text_print(stdscr, text)
-                for _index, _key in enumerate(new_text):
-
-                    if _x >= 80 and new_text[_index-1] == " ":
-                        ln += 1
-                        _x = 0
-                    stdscr.addstr(start_y+1+ln,
-                                  start_x+_x,
-                                  _key,
-                                  curses.color_pair(text_check(text,
-                                                               new_text,
-                                                               _index)))
-                    _x += 1
-                x = _x
+                new_text, x = key_delete(stdscr, new_text, start_y, start_x)
 
             case _:
                 # Добавление символа в пользовательский ввод
+                if key == "\n" or key == "    ":
+                    key = " "
+
                 if len(key) == 1 and len(text) != index:
                     new_text += key
                     if line_id > len(text):
