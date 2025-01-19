@@ -10,7 +10,7 @@ main.py
 с цветовой индикацией ошибок.
 """
 
-
+import re
 import sys
 import time
 import curses
@@ -43,10 +43,12 @@ LOGO = """
 
 
 # Генирирует текст
-def text_genirate():
+def text_genirate(num_words: int):
     """
         Выполняет чтение из файлов с тестом
 
+        Args:
+            num_words: Количества слов
         Returns:
             int: длина текта
             str: текст для тринажора
@@ -54,16 +56,13 @@ def text_genirate():
 
     with open("./text/test.txt", "r", encoding="utf-8") as fl:
         texts = fl.readlines()
-    res = random.choice(texts)
+    res_text = random.choice(texts)
+
+    maskc = re.compile(r"\b\w{2,}\b")
+
+    res = " ".join(maskc.findall(res_text)[0:int(num_words)])
+
     return len(res), res
-
-
-line_length, text = text_genirate()
-
-
-def new_text_genirate():
-    """Обновляет текст"""
-    line_length, text = text_genirate()
 
 
 # Проверка символа на правильность
@@ -89,19 +88,20 @@ def text_check(_text, _new_text, ind):
 
 # Подсчёт процента правильных символов в вводе пользователя
 # Возвращает процент правильности
-def percentage_correctness(res):
+def percentage_correctness(_text, res):
     """
         Проверяет правильности введенного текста
         Args:
+            _text: Этолонный текст
             res: Страка веденныя пользавотилем
         Returns:
             int: Процентное соотношение правильности
     """
     per = 0
     for ind, symbol in enumerate(res):
-        if text[ind] == symbol:
+        if _text[ind] == symbol:
             per += 1
-    return (per / len(text)) * 100
+    return (per / len(_text)) * 100
 
 
 def main(stdscr):
@@ -144,11 +144,38 @@ def text_print(stdscr, _text):
         if x >= 80 and _text[i-1] == " ":
             y += 1
             x = 0
-        stdscr.addstr(start_y + y - 5, start_x + x, _key)
+        stdscr.addstr(start_y + y, start_x + x, _key)
         x += 1
 
 
-def key_delete(stdscr, n_text, y, x):
+def length_selection_menu(stdscr):
+    """
+        Выводит меню для выбора количесива слов в строке
+    """
+    MENU = [
+        "Сenter the number of words from 1 to 50 and press ENTER to continue"
+    ]
+    stdscr.clear()
+    stdscr.addstr(2, 2, MENU[0])
+
+    lsm = ""
+    while True:
+        key = stdscr.getkey()
+
+        try:
+            if key == "\n":
+                if int(lsm) >= 1:
+                    return int(lsm)
+            elif isinstance(int(key), int):
+                if len(lsm) < 2:
+                    lsm += key
+            stdscr.addstr(3, 3, str(lsm))
+        except ValueError:
+            pass
+            # return int(lsm)
+
+
+def key_delete(stdscr, _text, n_text, y, x):
     """
         Отвечааете за стерание симвалов
 
@@ -160,6 +187,7 @@ def key_delete(stdscr, n_text, y, x):
         Returns:
             new_text: n_text без последнего симвала
             x: позицыя каретки по x
+            ln: номер строки
     """
     _x = 0
     ln = 0
@@ -167,20 +195,20 @@ def key_delete(stdscr, n_text, y, x):
     new_text = n_text[:-1]
     stdscr.clear()
 
-    text_print(stdscr, text)
+    text_print(stdscr, _text)
     for _index, _key in enumerate(new_text):
         if _x >= 80 and new_text[_index-1] == " ":
             ln += 1
             _x = 0
-        stdscr.addstr(y+1+ln,
+        stdscr.addstr(y+ln,
                       x+_x,
                       _key,
-                      curses.color_pair(text_check(text,
+                      curses.color_pair(text_check(_text,
                                                    new_text,
                                                    _index)))
         _x += 1
 
-    return new_text, _x
+    return new_text, _x, ln
 
 
 # Функция начала набора текста
@@ -195,6 +223,8 @@ def start_spelling(stdscr, duration=30000):
             int: Затраченное время
             int: Процент правельности набора
     """
+
+    line_length, text = text_genirate(length_selection_menu(stdscr))
     line_id = 0
     new_text = ""
 
@@ -234,8 +264,7 @@ def start_spelling(stdscr, duration=30000):
                 sys.exit(0)  # Завершение функции по нажатию `
 
             case "KEY_BACKSPACE":
-                new_text, x = key_delete(stdscr, new_text, start_y, start_x)
-
+                new_text, x, line_id = key_delete(stdscr, text, new_text, start_y, start_x)
             case _:
                 # Добавление символа в пользовательский ввод
                 if key == "\n" or key == "    ":
@@ -249,7 +278,7 @@ def start_spelling(stdscr, duration=30000):
                     if x >= 80 and new_text[index-1] == " ":
                         line_id += 1
                         x = 0
-                    stdscr.addstr(start_y+1+line_id,
+                    stdscr.addstr(start_y+line_id,
                                   start_x+x,
                                   key,
                                   curses.color_pair(text_check(text,
@@ -258,7 +287,10 @@ def start_spelling(stdscr, duration=30000):
                     x += 1
 
                 elif len(text) == index:
-                    return [elapsed_time, percentage_correctness(new_text)]
+                    return [
+                        elapsed_time,
+                        percentage_correctness(text, new_text)
+                    ]
 
 
 # Меню выбора тестов
@@ -310,7 +342,7 @@ def menuSpedTest(stdscr):
                 if key == "1":
                     start_spelling(stdscr, 60)
                 elif key == "2":
-                    menu_sped_test(stdscr)
+                    menuSpedTest(stdscr)
 
         elif key == "2":
             res = start_spelling(stdscr, duration=30)  # Тест на 1 минуту
@@ -326,7 +358,7 @@ def menuSpedTest(stdscr):
                     stdscr.addstr(3, 5, "1 : Click to try again")
                     stdscr.addstr(4, 5, "2 : Press to return to menu")
                 elif key == "2":
-                    menu_sped_test(stdscr)  # Возврат в меню
+                    menuSpedTest(stdscr)  # Возврат в меню
 
         elif key == "3":
             main(stdscr)  # Возврат в главное меню
