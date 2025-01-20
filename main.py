@@ -104,6 +104,15 @@ def percentage_correctness(_text, res):
     return (per / len(_text)) * 100
 
 
+def menu_with_results(stdscr, res):
+    """
+        Отрисовывает прамижктачное меню с результатами
+    """
+    stdscr.addstr(2, 5, f"Right :: {res[1]:.2f}%")
+    stdscr.addstr(3, 5, "1 : Click to try again")
+    stdscr.addstr(4, 5, "2 : Press to return to menu")
+
+
 def main(stdscr):
     """
         Отрисовывает стартовый экран приложения
@@ -119,9 +128,15 @@ def main(stdscr):
 
     while True:
         key = stdscr.getkey()
-        if key == "1":
-            start_spelling(stdscr)  # Запуск треножора
-            sys.exit(0)
+        if key == "1":  # Запуск треножора
+            menu_with_results(stdscr, start_spelling(stdscr))
+            while True:
+                key = stdscr.getkey()
+                if key == "1":
+                    menu_with_results(stdscr, start_spelling(stdscr))
+                elif key == "2":
+                    main(stdscr)
+
         elif key == "2":
             menuSpedTest(stdscr)  # Открытие меню тестов
         elif key == "4":
@@ -246,7 +261,7 @@ def start_spelling(stdscr, duration=30000):
         elapsed_time = time.time() - start_time
         if elapsed_time > duration:
             stdscr.addstr(1, 5,
-                          f"Right :: {percentage_correctness(new_text):.2f}%")
+                          f"Right :: {percentage_correctness(text, new_text):.2f}%")
             stdscr.addstr(2, 5, "Time to huntc")
             stdscr.addstr(3, 5, "1 : Click to try again")
             stdscr.addstr(4, 5, "2 : Press to return to menu")
@@ -331,32 +346,24 @@ def menuSpedTest(stdscr):
     while True:
         key = stdscr.getkey()
 
-        if key == "1":
-            res = start_spelling(stdscr, duration=60)  # Тест на 1 минуту
-            stdscr.addstr(2, start_x, f"Right :: {res[1]:.2f}%")
-            stdscr.addstr(3, 5, "1 : Click to try again")
-            stdscr.addstr(4, 5, "2 : Press to return to menu")
+        if key == "1":  # Тест на 1 минуту
+            menu_with_results(stdscr, start_spelling(stdscr, 60))
 
             while True:
                 key = stdscr.getkey()
                 if key == "1":
-                    start_spelling(stdscr, 60)
+                    menu_with_results(stdscr, start_spelling(stdscr, 60))
+                    break
                 elif key == "2":
                     menuSpedTest(stdscr)
+                    break
 
         elif key == "2":
-            res = start_spelling(stdscr, duration=30)  # Тест на 1 минуту
-            stdscr.addstr(2, start_x, f"Right :: {res[1]:.2f}%")
-            stdscr.addstr(3, 5, "1 : Click to try again")
-            stdscr.addstr(4, 5, "2 : Press to return to menu")
-
+            menu_with_results(stdscr, start_spelling(stdscr, 30))
             while True:
                 key = stdscr.getkey()
                 if key == "1":
-                    res = start_spelling(stdscr, 30)  # Перезапуск теста
-                    stdscr.addstr(2, start_x, f"Right :: {res[1]:.2f}%")
-                    stdscr.addstr(3, 5, "1 : Click to try again")
-                    stdscr.addstr(4, 5, "2 : Press to return to menu")
+                    menu_with_results(stdscr, start_spelling(stdscr, 30))
                 elif key == "2":
                     menuSpedTest(stdscr)  # Возврат в меню
 
