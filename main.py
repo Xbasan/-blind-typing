@@ -260,17 +260,7 @@ def start_spelling(stdscr, duration=30000):
         # Проверка на завершение времени
         elapsed_time = time.time() - start_time
         if elapsed_time > duration:
-            stdscr.addstr(1, 5,
-                          f"Right :: {percentage_correctness(text, new_text):.2f}%")
-            stdscr.addstr(2, 5, "Time to huntc")
-            stdscr.addstr(3, 5, "1 : Click to try again")
-            stdscr.addstr(4, 5, "2 : Press to return to menu")
-            while True:
-                key = stdscr.getkey()
-                if key == "1":
-                    start_spelling(stdscr, duration)
-                elif key == "2":
-                    menuSpedTest(stdscr)
+            return [elapsed_time, percentage_correctness(text, new_text)]
 
         index = len(new_text)
 
@@ -353,10 +343,8 @@ def menuSpedTest(stdscr):
                 key = stdscr.getkey()
                 if key == "1":
                     menu_with_results(stdscr, start_spelling(stdscr, 60))
-                    break
                 elif key == "2":
                     menuSpedTest(stdscr)
-                    break
 
         elif key == "2":
             menu_with_results(stdscr, start_spelling(stdscr, 30))
