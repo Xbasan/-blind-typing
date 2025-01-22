@@ -115,6 +115,72 @@ def menu_with_results(stdscr, res):
     stdscr.addstr(5, 5, "2 : Press to return to menu")
 
 
+# Меню выбора тестов
+# stdscr - экран curses
+def menuSpedTest(stdscr):
+    """
+        Отвечает за проведения теста и вывод его результата
+    """
+
+    stdscr.clear()
+    height, width = stdscr.getmaxyx()
+
+    menu_speed_test = [
+        "Select test duration",
+        "  1:   1 minute     ",
+        "  2:  30 seconds    ",
+        "  3:  Come back     ",
+        "  4:    Close       "
+    ]
+
+    start_x = (width - len(menu_speed_test[0])) // 2
+    start_y = height // 2
+
+    try:
+        stdscr.addstr(start_y-3, start_x, menu_speed_test[0])
+        stdscr.addstr(start_y-1, start_x, menu_speed_test[1])
+        stdscr.addstr(start_y, start_x, menu_speed_test[2])
+        stdscr.addstr(start_y+1, start_x, menu_speed_test[3])
+        stdscr.addstr(start_y+2, start_x, menu_speed_test[4])
+    except curses.error:
+        stdscr.addstr(1, 0, menu_speed_test[0])
+        stdscr.addstr(2, 0, menu_speed_test[1])
+        stdscr.addstr(3, 0, menu_speed_test[2])
+        stdscr.addstr(4, 0, menu_speed_test[3])
+        stdscr.addstr(5, 0, menu_speed_test[4])
+
+    # Цикл для обработки пользовательского ввода в меню
+    while True:
+        key = stdscr.getkey()
+
+        if key == "1":  # Тест на 1 минуту
+            menu_with_results(stdscr, start_spelling(stdscr, 60))
+
+            while True:
+                key = stdscr.getkey()
+                if key == "1":
+                    menu_with_results(stdscr, start_spelling(stdscr, 60))
+                elif key == "2":
+                    menuSpedTest(stdscr)
+
+        elif key == "2":
+            menu_with_results(stdscr, start_spelling(stdscr, 30))
+            while True:
+                key = stdscr.getkey()
+                if key == "1":
+                    menu_with_results(stdscr, start_spelling(stdscr, 30))
+                elif key == "2":
+                    menuSpedTest(stdscr)  # Возврат в меню
+
+        elif key == "3":
+            main(stdscr)  # Возврат в главное меню
+        elif key == "4":
+            sys.exit(0)  # Завершение программы
+        else:
+            stdscr.addstr(1, 1, "What the fuck did you press",
+                          curses.color_pair(1))
+
+
 def main(stdscr):
     """
         Отрисовывает стартовый экран приложения
@@ -304,72 +370,6 @@ def start_spelling(stdscr, duration=30000):
                         percentage_correctness(text, new_text),
                         corrections
                     )
-
-
-# Меню выбора тестов
-# stdscr - экран curses
-def menuSpedTest(stdscr):
-    """
-        Отвечает за проведения теста и вывод его результата
-    """
-
-    stdscr.clear()
-    height, width = stdscr.getmaxyx()
-
-    menu_speed_test = [
-        "Select test duration",
-        "  1:   1 minute     ",
-        "  2:  30 seconds    ",
-        "  3:  Come back     ",
-        "  4:    Close       "
-    ]
-
-    start_x = (width - len(menu_speed_test[0])) // 2
-    start_y = height // 2
-
-    try:
-        stdscr.addstr(start_y-3, start_x, menu_speed_test[0])
-        stdscr.addstr(start_y-1, start_x, menu_speed_test[1])
-        stdscr.addstr(start_y, start_x, menu_speed_test[2])
-        stdscr.addstr(start_y+1, start_x, menu_speed_test[3])
-        stdscr.addstr(start_y+2, start_x, menu_speed_test[4])
-    except curses.error:
-        stdscr.addstr(1, 0, menu_speed_test[0])
-        stdscr.addstr(2, 0, menu_speed_test[1])
-        stdscr.addstr(3, 0, menu_speed_test[2])
-        stdscr.addstr(4, 0, menu_speed_test[3])
-        stdscr.addstr(5, 0, menu_speed_test[4])
-
-    # Цикл для обработки пользовательского ввода в меню
-    while True:
-        key = stdscr.getkey()
-
-        if key == "1":  # Тест на 1 минуту
-            menu_with_results(stdscr, start_spelling(stdscr, 60))
-
-            while True:
-                key = stdscr.getkey()
-                if key == "1":
-                    menu_with_results(stdscr, start_spelling(stdscr, 60))
-                elif key == "2":
-                    menuSpedTest(stdscr)
-
-        elif key == "2":
-            menu_with_results(stdscr, start_spelling(stdscr, 30))
-            while True:
-                key = stdscr.getkey()
-                if key == "1":
-                    menu_with_results(stdscr, start_spelling(stdscr, 30))
-                elif key == "2":
-                    menuSpedTest(stdscr)  # Возврат в меню
-
-        elif key == "3":
-            main(stdscr)  # Возврат в главное меню
-        elif key == "4":
-            sys.exit(0)  # Завершение программы
-        else:
-            stdscr.addstr(1, 1, "What the fuck did you press",
-                          curses.color_pair(1))
 
 
 if __name__ == "__main__":
