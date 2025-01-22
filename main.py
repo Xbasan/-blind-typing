@@ -177,8 +177,7 @@ def menuSpedTest(stdscr):
         elif key == "4":
             sys.exit(0)  # Завершение программы
         else:
-            stdscr.addstr(1, 1, "What the fuck did you press",
-                          curses.color_pair(1))
+            stdscr.addstr(1, 1, "What the fuck did you press", `curses.color_pair(1))
 
 
 def main(stdscr):
