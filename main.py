@@ -108,9 +108,11 @@ def menu_with_results(stdscr, res):
     """
         Отрисовывает прамижктачное меню с результатами
     """
-    stdscr.addstr(2, 5, f"Right :: {res[1]:.2f}%")
-    stdscr.addstr(3, 5, "1 : Click to try again")
-    stdscr.addstr(4, 5, "2 : Press to return to menu")
+    stdscr.addstr(1, 5, f"Right       :: {res[1]:.2f}%")
+    stdscr.addstr(2, 5, f"Print time  :: {res[0]:.2f}")
+    stdscr.addstr(3, 5, f"Corrections :: {res[2]:02}")
+    stdscr.addstr(4, 5, "1 : Click to try again")
+    stdscr.addstr(5, 5, "2 : Press to return to menu")
 
 
 def main(stdscr):
@@ -243,6 +245,8 @@ def start_spelling(stdscr, duration=30000):
     line_id = 0
     new_text = ""
 
+    corrections = 0
+
     start_x = (stdscr.getmaxyx()[1] - 80) // 2
     start_y = stdscr.getmaxyx()[0] // 2
     x = 0
@@ -260,7 +264,11 @@ def start_spelling(stdscr, duration=30000):
         # Проверка на завершение времени
         elapsed_time = time.time() - start_time
         if elapsed_time > duration:
-            return [elapsed_time, percentage_correctness(text, new_text)]
+            return (
+                elapsed_time,
+                percentage_correctness(text, new_text),
+                corrections
+            )
 
         index = len(new_text)
 
@@ -270,6 +278,7 @@ def start_spelling(stdscr, duration=30000):
 
             case "KEY_BACKSPACE":
                 new_text, x, line_id = key_delete(stdscr, text, new_text, start_y, start_x)
+                corrections += 1
             case _:
                 # Добавление символа в пользовательский ввод
                 if key == "\n" or key == "    ":
@@ -277,8 +286,6 @@ def start_spelling(stdscr, duration=30000):
 
                 if len(key) == 1 and len(text) != index:
                     new_text += key
-                    if line_id > len(text):
-                        return [elapsed_time, percentage_correctness(new_text)]
 
                     if x >= 80 and new_text[index-1] == " ":
                         line_id += 1
@@ -292,10 +299,11 @@ def start_spelling(stdscr, duration=30000):
                     x += 1
 
                 elif len(text) == index:
-                    return [
+                    return (
                         elapsed_time,
-                        percentage_correctness(text, new_text)
-                    ]
+                        percentage_correctness(text, new_text),
+                        corrections
+                    )
 
 
 # Меню выбора тестов
