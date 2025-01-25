@@ -9,6 +9,10 @@ chmod +x ./main.py
 ./main.py
 ```
 
+Flatpak
+```
+```
+
 Windows install 
 ```
 git clone git@github.com:Xbasan/-blind-typing.git
@@ -16,3 +20,4 @@ cd -blind-typing
 pip install curses
 python main.py
 ```
+
