@@ -27,8 +27,24 @@ def main():
 def text_genirate():
     with open("./text/test.txt", "r", encoding="utf-8") as fl:
         texts = fl.readlines()
-    time_maskc = re.compile(r".{49,71}\s")
-    return time_maskc.findall(random.choice(texts).replace("\n", ""))
 
+    time_maskc = re.compile(r"\b\w{2,}\b")
+    rand = random.choice(texts)
+
+    print(rand)
+    return time_maskc.findall(rand.replace("\n", ""))[:int(input())]
+
+
+def test_():
+    with open("./text/test.txt", "r", encoding="utf-8") as fl:
+        texts = fl.readlines()
+
+    arr = []
+    for i in texts:
+        print(len(i.replace("\n", " ").split(" ")))
+        arr.append(len(i.replace("\n", " ").split(" ")))
+    print(len("".join(texts).replace("\n", " ").split(" ")))
+    print(max(arr))
 
 print(text_genirate())
+

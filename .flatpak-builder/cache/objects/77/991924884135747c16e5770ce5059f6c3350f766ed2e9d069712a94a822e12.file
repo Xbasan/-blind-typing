@@ -1,0 +1,46 @@
+{
+  "id" : "org.xamzpok.Blind-Typing",
+  "runtime" : "org.freedesktop.Platform",
+  "runtime-version" : "22.08",
+  "runtime-commit" : "89f5b42b081f8cfcf7fbb1d858b82af06fe19681e6f6ea4c3b769dcb6c1ac295",
+  "sdk" : "org.freedesktop.Sdk",
+  "sdk-commit" : "8827c57f7591c686e71b9d283d2336ed7088e8e27ce3fd588a058a73788b8c98",
+  "command" : "/app/start.sh",
+  "modules" : [
+    {
+      "name" : "python",
+      "buildsystem" : "simple",
+      "sources" : [
+        {
+          "path" : "src/main.py",
+          "type" : "file"
+        }
+      ],
+      "build-commands" : []
+    },
+    {
+      "name" : "app",
+      "buildsystem" : "simple",
+      "sources" : [
+        {
+          "path" : "src/main.py",
+          "type" : "file"
+        },
+        {
+          "path" : "src/test.txt",
+          "type" : "file"
+        },
+        {
+          "path" : "src/start.sh",
+          "type" : "file"
+        }
+      ],
+      "build-commands" : [
+        "install -D start.sh /app/start.sh",
+        "install -D main.py /app/main.py",
+        "install -D -m 644 test.txt /app/data/text.txt"
+      ]
+    }
+  ],
+  "source-date-epoch" : 1737806786
+}

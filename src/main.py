@@ -54,7 +54,7 @@ def text_genirate(num_words: int):
             str: текст для тринажора
     """
 
-    with open("./text/test.txt", "r", encoding="utf-8") as fl:
+    with open("/app/data/test.txt", "r", encoding="utf-8") as fl:
         texts = fl.readlines()
     res_text = random.choice(texts)
 
@@ -177,37 +177,9 @@ def menuSpedTest(stdscr):
         elif key == "4":
             sys.exit(0)  # Завершение программы
         else:
-            stdscr.addstr(1, 1, "What the fuck did you press", `curses.color_pair(1))
-
-
-def main(stdscr):
-    """
-        Отрисовывает стартовый экран приложения
-    """
-    curses.curs_set(0)  # Отключение отображения курсора
-    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_GREEN)
-    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_RED)
-    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
-
-    stdscr.clear()
-    stdscr.addstr(LOGO)
-    stdscr.refresh()
-
-    while True:
-        key = stdscr.getkey()
-        if key == "1":  # Запуск треножора
-            menu_with_results(stdscr, start_spelling(stdscr))
-            while True:
-                key = stdscr.getkey()
-                if key == "1":
-                    menu_with_results(stdscr, start_spelling(stdscr))
-                elif key == "2":
-                    main(stdscr)
-
-        elif key == "2":
-            menuSpedTest(stdscr)  # Открытие меню тестов
-        elif key == "4":
-            sys.exit(0)
+            stdscr.addstr(1, 1,
+                          "What the fuck did you press",
+                          curses.color_pair(1))
 
 
 def text_print(stdscr, _text):
@@ -337,38 +309,65 @@ def start_spelling(stdscr, duration=30000):
 
         index = len(new_text)
 
-        match key:
-            case "`":
-                sys.exit(0)  # Завершение функции по нажатию `
+        if key == "``":
+            sys.exit(0)  # Завершение функции по нажатию `
+        elif key == "KEY_BACKSPACE":
+            new_text, x, line_id = key_delete(stdscr, text, new_text, start_y, start_x)
+            corrections += 1
+        elif len(key) == 1:
+            # Добавление символа в пользовательский ввод
 
-            case "KEY_BACKSPACE":
-                new_text, x, line_id = key_delete(stdscr, text, new_text, start_y, start_x)
-                corrections += 1
-            case _:
-                # Добавление символа в пользовательский ввод
-                if key == "\n" or key == "    ":
-                    key = " "
+            if len(key) == 1 and len(text) != index:
+                new_text += key
 
-                if len(key) == 1 and len(text) != index:
-                    new_text += key
+                if x >= 80 and new_text[index-1] == " ":
+                    line_id += 1
+                    x = 0
 
-                    if x >= 80 and new_text[index-1] == " ":
-                        line_id += 1
-                        x = 0
-                    stdscr.addstr(start_y+line_id,
-                                  start_x+x,
-                                  key,
-                                  curses.color_pair(text_check(text,
-                                                               new_text,
-                                                               index)))
-                    x += 1
+                stdscr.addstr(start_y+line_id,
+                              start_x+x,
+                              key,
+                              curses.color_pair(text_check(text,
+                                                           new_text,
+                                                           index)))
+                x += 1
 
-                elif len(text) == index:
-                    return (
-                        elapsed_time,
-                        percentage_correctness(text, new_text),
-                        corrections
-                    )
+            elif len(text) == index:
+                return (
+                    elapsed_time,
+                    percentage_correctness(text, new_text),
+                    corrections
+                )
+
+
+def main(stdscr):
+    """
+        Отрисовывает стартовый экран приложения
+    """
+    curses.curs_set(0)  # Отключение отображения курсора
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_GREEN)
+    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_RED)
+    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
+
+    stdscr.clear()
+    stdscr.addstr(LOGO)
+    stdscr.refresh()
+
+    while True:
+        key = stdscr.getkey()
+        if key == "1":  # Запуск треножора
+            menu_with_results(stdscr, start_spelling(stdscr))
+            while True:
+                key = stdscr.getkey()
+                if key == "1":
+                    menu_with_results(stdscr, start_spelling(stdscr))
+                elif key == "2":
+                    main(stdscr)
+
+        elif key == "2":
+            menuSpedTest(stdscr)  # Открытие меню тестов
+        elif key == "4":
+            sys.exit(0)
 
 
 if __name__ == "__main__":
