@@ -1,6 +1,6 @@
 id: org.xamzpok.Blind-Typing
 runtime: org.freedesktop.Platform
-runtime-version: "22.08"
+runtime-version: "23.08"
 sdk: org.freedesktop.Sdk 
 command: /app/start.sh
 
@@ -17,7 +17,7 @@ modules:
     build-commands:
       - install -D start.sh /app/start.sh
       - install -D main.py /app/main.py
-      - install -D -m 644 test.txt /app/data/text.txt
+      - install -D -m 644 test.txt /app/config/text.txt
     sources:
       - type: file
         path: src/main.py

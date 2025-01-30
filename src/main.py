@@ -30,15 +30,15 @@ LOGO = """
    ::       ::   :::  :::: ::      ::     ::        ::   ::   ::   ::: ::::   :: ::::  ::   :::  :::: ::  
    :         :   : :  :: : :       :      :        :    ::    :    :: :: :   : :: ::    :   : :  :: : :  
 
-                                               ----------
-                                               |Hi press|
-                                            ----------------
-                                            |  1 to start  |
-                                            ----------------
-                                            |  2 to test   |
-                                            ----------------
-                                            |  4 to close  |
-                                            ----------------
+                                            ┌──────────────┐
+                                            │   Hi press   │
+                                            ├──────────────┤
+                                            │  1 ─ start   │
+                                            ├──────────────┤
+                                            │  2 ─ test    │
+                                            ├──────────────┤
+                                            │  4 ─ close   │
+                                            └──────────────┘
  """
 
 
@@ -54,7 +54,7 @@ def text_genirate(num_words: int):
             str: текст для тринажора
     """
 
-    with open("/app/data/test.txt", "r", encoding="utf-8") as fl:
+    with open("/home/khamzat/.config/blind-typing/test.txt", "r", encoding="utf-8") as fl:
         texts = fl.readlines()
     res_text = random.choice(texts)
 
@@ -109,7 +109,7 @@ def menu_with_results(stdscr, res):
         Отрисовывает прамижктачное меню с результатами
     """
     stdscr.addstr(1, 5, f"Right       :: {res[1]:.2f}%")
-    stdscr.addstr(2, 5, f"Print time  :: {res[0]:.2f}")
+    stdscr.addstr(2, 5, f"Print time  :: {res[0]:.2f} s")
     stdscr.addstr(3, 5, f"Corrections :: {res[2]:02}")
     stdscr.addstr(4, 5, "1 : Click to try again")
     stdscr.addstr(5, 5, "2 : Press to return to menu")
