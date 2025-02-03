@@ -53,8 +53,9 @@ def text_genirate(num_words: int):
             int: длина текта
             str: текст для тринажора
     """
+    path = "/home/khamzat/.config/blind-typing/test.txt"
 
-    with open("/home/khamzat/.config/blind-typing/test.txt", "r", encoding="utf-8") as fl:
+    with open(path, "r", encoding="utf-8") as fl:
         texts = fl.readlines()
     res_text = random.choice(texts)
 
@@ -108,11 +109,11 @@ def menu_with_results(stdscr, res):
     """
         Отрисовывает прамижктачное меню с результатами
     """
-    stdscr.addstr(1, 5, f"Right       :: {res[1]:.2f}%")
-    stdscr.addstr(2, 5, f"Print time  :: {res[0]:.2f} s")
-    stdscr.addstr(3, 5, f"Corrections :: {res[2]:02}")
-    stdscr.addstr(4, 5, "1 : Click to try again")
-    stdscr.addstr(5, 5, "2 : Press to return to menu")
+    stdscr.addstr(2, 5, f"Right       :: {res[1]:.2f}%")
+    stdscr.addstr(3, 5, f"Print time  :: {res[0]:.2f} s")
+    stdscr.addstr(4, 5, f"Corrections :: {res[2][0]:02}/{res[2][1]:02}")
+    stdscr.addstr(5, 5, "1 : Click to try again")
+    stdscr.addstr(6, 5, "2 : Press to return to menu")
 
 
 # Меню выбора тестов
@@ -210,7 +211,7 @@ def length_selection_menu(stdscr):
         "Сenter the number of words from 1 to 50 and press ENTER to continue"
     ]
     stdscr.clear()
-    stdscr.addstr(2, 2, MENU[0])
+    stdscr.addstr(2, 4, MENU[0])
 
     lsm = ""
     while True:
@@ -223,7 +224,7 @@ def length_selection_menu(stdscr):
             elif isinstance(int(key), int):
                 if len(lsm) < 2:
                     lsm += key
-            stdscr.addstr(3, 3, str(lsm))
+            stdscr.addstr(3, 4, str(lsm))
         except ValueError:
             pass
             # return int(lsm)
@@ -304,7 +305,7 @@ def start_spelling(stdscr, duration=30000):
             return (
                 elapsed_time,
                 percentage_correctness(text, new_text),
-                corrections
+                (corrections, len(text))
             )
 
         index = len(new_text)
@@ -316,6 +317,8 @@ def start_spelling(stdscr, duration=30000):
             corrections += 1
         elif len(key) == 1:
             # Добавление символа в пользовательский ввод
+            if key == "\n":
+                key = " "
 
             if len(key) == 1 and len(text) != index:
                 new_text += key
@@ -336,7 +339,7 @@ def start_spelling(stdscr, duration=30000):
                 return (
                     elapsed_time,
                     percentage_correctness(text, new_text),
-                    corrections
+                    (corrections, len(text))
                 )
 
 
