@@ -109,9 +109,11 @@ def menu_with_results(stdscr, res):
     """
         Отрисовывает прамижктачное меню с результатами
     """
+    cor = (res[2][0] / res[2][1]) * 100 
+
     stdscr.addstr(2, 5, f"Right       :: {res[1]:.2f}%")
     stdscr.addstr(3, 5, f"Print time  :: {res[0]:.2f} s")
-    stdscr.addstr(4, 5, f"Corrections :: {res[2][0]:02}/{res[2][1]:02}")
+    stdscr.addstr(4, 5, f"Corrections :: {cor:.2f}% {res[2][0]}/{res[2][1]}")
     stdscr.addstr(5, 5, "1 : Click to try again")
     stdscr.addstr(6, 5, "2 : Press to return to menu")
 
@@ -220,6 +222,8 @@ def length_selection_menu(stdscr):
         try:
             if key == "\n":
                 if int(lsm) >= 1:
+                    if lsm == "00":
+                        return 1
                     return int(lsm)
             elif isinstance(int(key), int):
                 if len(lsm) < 2:
