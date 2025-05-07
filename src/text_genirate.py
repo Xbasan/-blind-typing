@@ -46,5 +46,13 @@ def test_():
     print(len("".join(texts).replace("\n", " ").split(" ")))
     print(max(arr))
 
-print(text_genirate())
+
+def bly():
+    with open("./test.txt", "r", encoding="utf-8") as fl:
+        texts = type(fl)
+
+    return texts
+
+
+print(bly())
 

@@ -10,6 +10,7 @@ main.py
 с цветовой индикацией ошибок.
 """
 
+import os
 import re
 import sys
 import time
@@ -53,7 +54,8 @@ def text_genirate(num_words: int):
             int: длина текта
             str: текст для тринажора
     """
-    path = "/home/khamzat/.config/blind-typing/test.txt"
+    home_path = os.path.expanduser("~")
+    path = f"{home_path}/.config/blind-typing/test.txt"
 
     with open(path, "r", encoding="utf-8") as fl:
         texts = fl.readlines()
@@ -84,6 +86,8 @@ def text_check(_text, _new_text, ind):
     """
     if _text[ind] == _new_text[ind]:
         return 3
+    elif str.upper(_text[ind]) == str.upper(_new_text[ind]):
+        return 4
     return 1
 
 
@@ -111,7 +115,6 @@ def information_about_typos(symbol, your_click):
     """
         Придостовляет информацыю о количестве опечаток
     """
-
     pass
 
 
@@ -139,7 +142,7 @@ def MainMenu(stdscr):
         print(num)
         start_x = (width - len(item)) // 2
         start_y = height // 2
-        stdscr.addstr(start_y+num-10, start_x, item)
+        stdscr.addstr(start_y+num-12, start_x, item)
 
 
 # Меню выбора тестов
@@ -198,7 +201,6 @@ def menuSpedTest(stdscr):
                     menu_with_results(stdscr, start_spelling(stdscr, 30))
                 elif key == "2":
                     menuSpedTest(stdscr)  # Возврат в меню
-
         elif key == "3":
             main(stdscr)  # Возврат в главное меню
         elif key == "4":
@@ -282,12 +284,18 @@ def key_delete(stdscr, _text, n_text, y, x):
         if _x >= 80 and new_text[_index-1] == " ":
             ln += 1
             _x = 0
-        stdscr.addstr(y+ln,
-                      x+_x,
+        stdscr.addstr(
+                      y + ln,
+                      x + _x,
                       _key,
-                      curses.color_pair(text_check(_text,
+                      curses.color_pair(
+                                        text_check(
+                                                   _text,
                                                    new_text,
-                                                   _index)))
+                                                   _index
+                                               )
+                                    )
+                  )
         _x += 1
 
     return new_text, _x, ln
@@ -340,7 +348,13 @@ def start_spelling(stdscr, duration=30000):
         if key == "`":
             sys.exit(0)  # Завершение функции по нажатию `
         elif key == "KEY_BACKSPACE":
-            new_text, x, line_id = key_delete(stdscr, text, new_text, start_y, start_x)
+            new_text, x, line_id = key_delete(
+                                              stdscr,
+                                              text,
+                                              new_text,
+                                              start_y,
+                                              start_x
+                                          )
             corrections += 1
         elif len(key) == 1:
             # Добавление символа в пользовательский ввод
@@ -375,9 +389,10 @@ def main(stdscr):
         Отрисовывает стартовый экран приложения
     """
     curses.curs_set(0)  # Отключение отображения курсора
-    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_GREEN)
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_RED)
     curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
+    curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_GREEN)
+    curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_YELLOW)
 
     stdscr.clear()
     MainMenu(stdscr)
