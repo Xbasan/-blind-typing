@@ -1,29 +1,38 @@
-# from collections import defaultdict
+# analytics.py
+
 import os
 import json
 
 
 class Analytics():
+    """
+    Класс для сбора и хранения статистики по ошибкам ввода.
+    Данные сохраняются в JSON-файл в домашней директории пользователя.
+    """
+
     def __init__(self):
         super().__init__()
         self._home_dir = os.path.expanduser("~")
-        # self._analytics_data = defaultdict(lambda: defaultdict(int))
         self._path = "/.config/blind-typing/analyticsData.json"
         try:
+            # Попытка загрузить существующие данные
             with open(f"{self._home_dir}{self._path}", "r") as file:
                 self._analytics_data = json.load(file)
         except IOError:
+            # Если файла нет, создаем пустой словарь
             with open(f"{self._home_dir}{self._path}", "w") as _:
                 self._analytics_data = {}
 
-    def set_key(self, correct_symbol, key):
+    def set_key(self, correct_symbol: str, key: str):
         """
-            Добавляет опечатку в объект
-            Args:
-                str: correct_symbol: Символ который должен быть
-                str: key: Символ что ввел пользователь
+        Записывает статистику по ошибке ввода.
+        Увеличивает счетчик для пары (правильный символ, введенный символ).
+
+        Args:
+            correct_symbol: символ, который должен был быть введен
+            key: символ, который ввел пользователь
         """
-        if correct_symbol not in key:
+        if correct_symbol not in key:  # Если символы не совпадают
             if correct_symbol not in self._analytics_data:
                 self._analytics_data[correct_symbol] = {}
             if key not in self._analytics_data[correct_symbol]:
@@ -32,7 +41,7 @@ class Analytics():
 
     def final(self):
         """
-            Сохраняет изменения
+            Сохраняет собранную статистику в файл.
         """
         with open(
                   f"{self._home_dir}/{self._path}",
@@ -43,9 +52,10 @@ class Analytics():
 
     def get_key(self):
         """
-            Возвращает данные аналитики.
-            Returns:
-                dict: Словарь с данными об ошибках ввода.
+        Возвращает собранную статистику.
+
+        Returns:
+            dict: словарь с статистикой ошибок
         """
         return self._analytics_data
 

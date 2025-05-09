@@ -19,7 +19,7 @@ import random
 from curses import wrapper
 from analytics import Analytics
 
-# Стартовый экран приложения
+# Стартовый экран приложения - ASCII-арт логотипа и меню
 LOGO = [
     "@@@@@@@@   @@@@@@    @@@@@@   @@@@@@@  @@@@@@@@  @@@  @@@  @@@   @@@@@@@@  @@@@@@@@  @@@@@@@    @@@@@@ ",
     "@@@@@@@@  @@@@@@@@  @@@@@@@   @@@@@@@  @@@@@@@@  @@@  @@@@ @@@  @@@@@@@@@  @@@@@@@@  @@@@@@@@  @@@@@@@ ",
@@ -45,19 +45,20 @@ LOGO = [
     "└──────────────┘"
 ]
 
+# Инициализация объекта для сбора аналитики
 analy = Analytics()
 
 
-# Генирирует текст
 def text_genirate(num_words: int):
     """
-        Выполняет чтение из файлов с тестом
+    Генерирует текст для набора из файла с тестами.
+    Читает файл test.txt из конфигурационной директории пользователя,
+    выбирает случайный текст и обрезает его до указанного количества слов.
 
-        Args:
-            num_words: Количества слов
-        Returns:
-            int: длина текта
-            str: текст для тринажора
+    Args:
+        num_words: Количество слов для генерации
+    Returns:
+        tuple: (длина текста, сгенерированный текст)
     """
     home_path = os.path.expanduser("~")
     path = f"{home_path}/.config/blind-typing/test.txt"
@@ -70,21 +71,17 @@ def text_genirate(num_words: int):
     return len(res), res
 
 
-# Проверка символа на правильность
-# text - эталонный текст,
-# new_text - пользовательский ввод,
-# ind - индекс символа
-# Возвращает индекс цвета 2, если символ правильный, и 1, если нет
-def text_check(_text, _new_text, ind):
+def text_check(_text: str, _new_text: str, ind) -> int:
     """
-        Выполняет проверку правильности введенного текста.
+    Проверяет правильность введенного символа.
+    Записывает статистику в объект аналитики.
 
-        Args:
-            str: _text: Этолонный текст.
-            str: _new_text: Новый введенный текст.
-            str: _ind: Номер буквы.
-        Returns:
-            int: 1 при неправильной буквы 3 при правильном.
+    Args:
+        _text: Эталонный текст
+        _new_text: Введенный текст пользователя
+        ind: Индекс проверяемого символа
+    Returns:
+        int: код цвета для отображения (3 - правильный, 4 - правильный регистр, 1 - ошибка)
     """
     analy.set_key(_text[ind], _new_text[ind])
     if _text[ind] == _new_text[ind]:
@@ -94,16 +91,15 @@ def text_check(_text, _new_text, ind):
     return 1
 
 
-# Подсчёт процента правильных символов в вводе пользователя
-# Возвращает процент правильности
-def percentage_correctness(_text, res):
+def percentage_correctness(_text: str, res: str) -> int:
     """
-        Проверяет правильности введенного текста
-        Args:
-            _text: Этолонный текст
-            res: Страка веденныя пользавотилем
-        Returns:
-            int: Процентное соотношение правильности
+    Вычисляет процент правильных символов в введенном тексте.
+
+    Args:
+        _text: Эталонный текст
+        res: Введенный текст пользователя
+    Returns:
+        float: Процент правильных символов
     """
     per = 0
     for ind, symbol in enumerate(res):
@@ -112,19 +108,18 @@ def percentage_correctness(_text, res):
     return (per / len(_text)) * 100
 
 
-# Информация о опечатках
-# Придостовляет информацыю о количестве опечаток
 def information_about_typos(stdscr):
     """
-        Придостовляет информацыю о количестве опечаток
+    Отображает статистику по ошибкам ввода в виде прокручиваемого списка.
+    Показывает для каждого символа, какие ошибки делал пользователь и их количество.
     """
     stdscr.clear()
     stdscr.keypad(True)
 
-    date = analy.get_key()
+    date = analy.get_key()  # Получение данных аналитики
 
     lines = []
-
+    # Формирование строк для отображения статистики
     for sim in date:
         sort_sim = dict(
                         sorted(date[sim].items(),
@@ -137,12 +132,14 @@ def information_about_typos(stdscr):
     current_line = 0
     max_x, max_y = stdscr.getmaxyx()
 
+    # Цикл отображения с возможностью прокрутки
     while True:
         stdscr.clear()
         stdscr.addstr(0, 1, "Prev cmds work here too 'q'")
         stdscr.addstr(1, 1, "│ Correct │ Mistyped │ Count │")
         stdscr.addstr(2, 1, "├─────────┼──────────┼───────┤")
 
+        # Отображение видимой части списка
         for idx, line in enumerate(lines[current_line: current_line + max_y]):
             try:
                 stdscr.addstr(idx + 3, 2, line[:max_x - 2])
@@ -173,7 +170,10 @@ def information_about_typos(stdscr):
 
 def menu_with_results(stdscr, res):
     """
-        Отрисовывает прамижктачное меню с результатами
+    Отображает меню с результатами теста:
+    - Процент правильных символов
+    - Время набора
+    - Процент исправлений
     """
     cor = (res[2][0] / res[2][1]) * 100 
 
@@ -186,11 +186,12 @@ def menu_with_results(stdscr, res):
 
 def MainMenu(stdscr):
     """
-        Выводит основное меню
+    Отображает главное меню программы с ASCII-артом.
     """
     stdscr.clear()
     height, width = stdscr.getmaxyx()
 
+    # Центрированное отображение логотипа и меню
     for num, item in enumerate(LOGO):
         print(num)
         start_x = (width - len(item)) // 2
@@ -198,11 +199,14 @@ def MainMenu(stdscr):
         stdscr.addstr(start_y+num-12, start_x, item)
 
 
-# Меню выбора тестов
-# stdscr - экран curses
 def menuSpedTest(stdscr):
     """
-        Отвечает за проведения теста и вывод его результата
+    Отображает меню выбора продолжительности теста:
+    - 1 минута
+    - 30 секунд
+    - Возврат в меню
+    - Выход
+    - Аналитика
     """
     stdscr.clear()
     height, width = stdscr.getmaxyx()
@@ -216,10 +220,12 @@ def menuSpedTest(stdscr):
         "  5:  Analytics     "
     ]
 
+    # Центрирование меню
     start_x = (width - len(menu_speed_test[0])) // 2
     start_y = height // 2
 
     try:
+        # Попытка центрированного отображения
         stdscr.addstr(start_y-3, start_x, menu_speed_test[0])
         stdscr.addstr(start_y-1, start_x, menu_speed_test[1])
         stdscr.addstr(start_y, start_x, menu_speed_test[2])
@@ -227,27 +233,29 @@ def menuSpedTest(stdscr):
         stdscr.addstr(start_y+2, start_x, menu_speed_test[4])
         stdscr.addstr(start_y+3, start_x, menu_speed_test[5])
     except curses.error:
+        # Если не хватает места, отображаем в верхнем левом углу
         stdscr.addstr(1, 0, menu_speed_test[0])
         stdscr.addstr(2, 0, menu_speed_test[1])
         stdscr.addstr(3, 0, menu_speed_test[2])
         stdscr.addstr(4, 0, menu_speed_test[3])
         stdscr.addstr(5, 0, menu_speed_test[4])
         stdscr.addstr(6, 0, menu_speed_test[5])
-    # Цикл для обработки пользовательского ввода в меню
+
+    # Обработка выбора пользователя
     while True:
         key = stdscr.getkey()
 
-        if key == "1":  # Тест на 1 минуту
+        if key == "1":    # Тест на 1 минуту
             menu_with_results(stdscr, start_spelling(stdscr, 60))
             main_menu_loop(stdscr)
-        elif key == "2":
+        elif key == "2":  # Тест на 30 секунд
             menu_with_results(stdscr, start_spelling(stdscr, 30))
             main_menu_loop(stdscr)
-        elif key == "3":
-            main(stdscr)  # Возврат в главное меню
-        elif key == "4":
-            sys.exit(0)  # Завершение программы
-        elif key == "5":
+        elif key == "3":  # Возврат в главное меню
+            main(stdscr)
+        elif key == "4":  # Выход
+            sys.exit(0)
+        elif key == "5":  # Просмотр аналитики
             information_about_typos(stdscr)
         else:
             stdscr.addstr(1, 1,
@@ -256,19 +264,20 @@ def menuSpedTest(stdscr):
 
 
 def main_menu_loop(stdscr):
+    """
+    Цикл обработки ввода в главном меню после завершения теста.
+    """
     while True:
         key = stdscr.getkey()
-        if key == "1":
+        if key == "1":    # Повторить тест
             menu_with_results(stdscr, start_spelling(stdscr, 30))
-        elif key == "2":
-            menuSpedTest(stdscr) # Возврат в меню
+        elif key == "2":  # Вернуться в меню тестов
+            menuSpedTest(stdscr)
 
 
-def text_print(stdscr, _text):
+def text_print(stdscr, _text: str):
     """
-        Пичатает на экране приложения текст
-        Args:
-            _text: Текст который нужно вывести
+    Отображает текст для набора с переносами строк (макс. 80 символов в строке).
     """
     # Расчёт начальной позиции текста
     start_x = (stdscr.getmaxyx()[1] - 80) // 2
@@ -277,7 +286,7 @@ def text_print(stdscr, _text):
     x = 0
     y = 0
     for i, _key in enumerate(_text):
-        if x >= 80 and _text[i-1] == " ":
+        if x >= 80 and _text[i-1] == " ":  # Перенос на новую строку
             y += 1
             x = 0
         stdscr.addstr(start_y + y, start_x + x, _key)
@@ -286,7 +295,7 @@ def text_print(stdscr, _text):
 
 def length_selection_menu(stdscr):
     """
-        Выводит меню для выбора количесива слов в строке
+    Меню выбора количества слов в тесте (от 1 до 50).
     """
     MENU = [
         "Сenter the number of words from 1 to 50 and press ENTER to continue"
@@ -299,40 +308,35 @@ def length_selection_menu(stdscr):
         key = stdscr.getkey()
 
         try:
-            if key == "\n":
+            if key == "\n":  # Enter - завершение ввода
                 if lsm == "00":
                     lsm = 1
                 return int(lsm)
-            elif isinstance(int(key), int):
+            elif isinstance(int(key), int):  # Ввод цифр
                 if len(lsm) < 2:
                     lsm += key
             stdscr.addstr(3, 4, str(lsm))
         except ValueError:
             pass
-            # return int(lsm)
 
 
-def key_delete(stdscr, _text, n_text, y, x):
+def key_delete(stdscr, _text: str, n_text: str, y: int, x: int):
     """
-        Отвечааете за стерание симвалов
+    Обрабатывает удаление символа (Backspace):
+    - Удаляет последний символ
+    - Перерисовывает текст с учетом изменений
+    - Обновляет позицию курсора
 
-        Ards:
-            n_text: Принемает строку из симвалов веденных пользоватилем,
-            y: Принемает высота окна,
-            x: Принемае длину окна
-
-        Returns:
-            new_text: n_text без последнего симвала
-            x: позицыя каретки по x
-            ln: номер строки
+    Returns:
+        tuple: (новый текст, позиция X, номер строки)
     """
     _x = 0
     ln = 0
-    # Удаление последнего символа
-    new_text = n_text[:-1]
+    new_text = n_text[:-1]  # Удаление последнего символа
     stdscr.clear()
 
     text_print(stdscr, _text)
+    # Перерисовка введенного текста с подсветкой ошибокc
     for _index, _key in enumerate(new_text):
         if _x >= 80 and new_text[_index-1] == " ":
             ln += 1
@@ -354,36 +358,32 @@ def key_delete(stdscr, _text, n_text, y, x):
     return new_text, _x, ln
 
 
-# Функция начала набора текста
-# stdscr - экран curses,
-# duration - время теста в секундах
 def start_spelling(stdscr, duration=30000):
     """
-        Функция начала набора текста
-        Args:
-            duration: Време длительности теста
-        Returns:
-            int: Затраченное время
-            int: Процент правельности набора
-    """
+    Основная функция тестирования набора текста.
+    Управляет процессом набора, подсчетом времени и статистики.
 
+    Args:
+        duration: Продолжительность теста в секундах
+    Returns:
+        tuple: (затраченное время, процент правильности, (кол-во исправлений, длина текста))
+    """
     line_length, text = text_genirate(length_selection_menu(stdscr))
     line_id = 0
     new_text = ""
-
-    corrections = 0
+    corrections = 0  # Счетчик исправлений
 
     start_x = (stdscr.getmaxyx()[1] - 80) // 2
     start_y = stdscr.getmaxyx()[0] // 2
     x = 0
 
     stdscr.clear()
-    # Отображение текста
+
     text_print(stdscr, text)
 
     start_time = time.time()
 
-    # Цикл для обработки пользовательского вводаc
+    # Основной цикл обработки ввода
     while True:
         key = stdscr.getkey()
 
@@ -398,9 +398,9 @@ def start_spelling(stdscr, duration=30000):
 
         index = len(new_text)
 
-        if key == "`":
-            sys.exit(0)  # Завершение функции по нажатию `
-        elif key == "KEY_BACKSPACE":
+        if key == "`":  # Выход по `
+            sys.exit(0)
+        elif key == "KEY_BACKSPACE":  # Обработка удаления
             new_text, x, line_id = key_delete(
                                               stdscr,
                                               text,
@@ -409,18 +409,18 @@ def start_spelling(stdscr, duration=30000):
                                               start_x
                                           )
             corrections += 1
-        elif len(key) == 1:
-            # Добавление символа в пользовательский ввод
+        elif len(key) == 1:  # Обработка ввода символа
             if key == "\n":
-                key = " "
+                key = " "    # Замена Enter на пробел
 
             if len(key) == 1 and len(text) != index:
                 new_text += key
 
-                if x >= 80 and new_text[index-1] == " ":
+                if x >= 80 and new_text[index-1] == " ":  # Перенос строки
                     line_id += 1
                     x = 0
 
+                # Отображение символа с подсветкой
                 stdscr.addstr(start_y+line_id,
                               start_x+x,
                               key,
@@ -429,8 +429,8 @@ def start_spelling(stdscr, duration=30000):
                                                            index)))
                 x += 1
 
-            elif len(text) == index:
-                analy.final()
+            elif len(text) == index:  # Весь текст набран
+                analy.final()         # Сохранение статистики
                 return (
                     elapsed_time,
                     percentage_correctness(text, new_text),
@@ -440,9 +440,14 @@ def start_spelling(stdscr, duration=30000):
 
 def main(stdscr):
     """
-        Отрисовывает стартовый экран приложения
+    Главная функция, инициализирует curses и запускает главное меню.
     """
-    curses.curs_set(0)  # Отключение отображения курсора
+    curses.curs_set(0)  # Скрытие курсора
+    # Инициализация цветовых пар:
+    # 1 - ошибка (зеленый на красном)
+    # 2 - хуй знает зачем но без него не работает (черный на белом)
+    # 3 - правильный символ (черный на зеленом)
+    # 4 - правильный символ, другой регистр (черный на желтом)
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_RED)
     curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_WHITE)
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_GREEN)
@@ -452,22 +457,23 @@ def main(stdscr):
     MainMenu(stdscr)
     stdscr.refresh()
 
+    # Обработка выбора в главном меню
     while True:
         key = stdscr.getkey()
         if key == "1":  # Запуск треножора
             menu_with_results(stdscr, start_spelling(stdscr))
             while True:
                 key = stdscr.getkey()
-                if key == "1":
+                if key == "1":    # Повторить
                     menu_with_results(stdscr, start_spelling(stdscr))
-                elif key == "2":
+                elif key == "2":  # В главное меню
                     main(stdscr)
 
-        elif key == "2":
-            menuSpedTest(stdscr)  # Открытие меню тестов
-        elif key == "4":
+        elif key == "2":  # Меню тестов
+            menuSpedTest(stdscr)
+        elif key == "4":  # Выход
             sys.exit(0)
-        elif key == "5":
+        elif key == "5":  # Аналитика
             information_about_typos(stdscr)
 
 
