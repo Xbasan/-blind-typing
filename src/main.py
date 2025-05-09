@@ -17,6 +17,7 @@ import time
 import curses
 import random
 from curses import wrapper
+from analytics import Analytics
 
 # Стартовый экран приложения
 LOGO = [
@@ -34,13 +35,17 @@ LOGO = [
     "┌──────────────┐",
     "│   Hi press   │",
     "├──────────────┤",
-    "│  1 ─ start   │",
+    "│   1 ─ start  │",
     "├──────────────┤",
-    "│  2 ─ test    │",
+    "│   2 ─ test   │",
     "├──────────────┤",
-    "│  4 ─ close   │",
+    "│ 5 ─ Analytic │",
+    "├──────────────┤",
+    "│   4 ─ close  │",
     "└──────────────┘"
 ]
+
+analy = Analytics()
 
 
 # Генирирует текст
@@ -60,11 +65,8 @@ def text_genirate(num_words: int):
     with open(path, "r", encoding="utf-8") as fl:
         texts = fl.readlines()
     res_text = random.choice(texts)
-
     maskc = re.compile(r"\b\w{2,}\b")
-
     res = " ".join(maskc.findall(res_text)[0:int(num_words)])
-
     return len(res), res
 
 
@@ -84,6 +86,7 @@ def text_check(_text, _new_text, ind):
         Returns:
             int: 1 при неправильной буквы 3 при правильном.
     """
+    analy.set_key(_text[ind], _new_text[ind])
     if _text[ind] == _new_text[ind]:
         return 3
     elif str.upper(_text[ind]) == str.upper(_new_text[ind]):
@@ -111,11 +114,61 @@ def percentage_correctness(_text, res):
 
 # Информация о опечатках
 # Придостовляет информацыю о количестве опечаток
-def information_about_typos(symbol, your_click):
+def information_about_typos(stdscr):
     """
         Придостовляет информацыю о количестве опечаток
     """
-    pass
+    stdscr.clear()
+    stdscr.keypad(True)
+
+    date = analy.get_key()
+
+    lines = []
+
+    for sim in date:
+        sort_sim = dict(
+                        sorted(date[sim].items(),
+                               key=lambda item: item[1],
+                               reverse=True))
+        for ke in sort_sim:
+            str_elim = f"    {sim}    │     {ke}    │   {date[sim][ke]} "
+            lines.append(str_elim)
+
+    current_line = 0
+    max_x, max_y = stdscr.getmaxyx()
+
+    while True:
+        stdscr.clear()
+        stdscr.addstr(0, 1, "Prev cmds work here too 'q'")
+        stdscr.addstr(1, 1, "│ Correct │ Mistyped │ Count │")
+        stdscr.addstr(2, 1, "├─────────┼──────────┼───────┤")
+
+        for idx, line in enumerate(lines[current_line: current_line + max_y]):
+            try:
+                stdscr.addstr(idx + 3, 2, line[:max_x - 2])
+            except curses.error:
+                pass
+
+        stdscr.refresh()
+
+        key = stdscr.getch()
+
+        if key == curses.KEY_UP:
+            if current_line > 0:
+                current_line -= 1
+        elif key == curses.KEY_DOWN:
+            if current_line < len(lines) - 2:
+                current_line += 1
+        elif key in (ord("q"), 27):
+            break
+    # for inte, sim in enumerate(date):
+    #     str_elim = f"{sim} : {dict(
+    #                                sorted(
+    #                                       date[sim].items(),
+    #                                       key=lambda item: item[1],
+    #                                       reverse=True)
+    #                            )}"
+    #     stdscr.addstr(inte+1, 2, str_elim)
 
 
 def menu_with_results(stdscr, res):
@@ -151,7 +204,6 @@ def menuSpedTest(stdscr):
     """
         Отвечает за проведения теста и вывод его результата
     """
-
     stdscr.clear()
     height, width = stdscr.getmaxyx()
 
@@ -160,7 +212,8 @@ def menuSpedTest(stdscr):
         "  1:   1 minute     ",
         "  2:  30 seconds    ",
         "  3:  Come back     ",
-        "  4:    Close       "
+        "  4:    Close       ",
+        "  5:  Analytics     "
     ]
 
     start_x = (width - len(menu_speed_test[0])) // 2
@@ -172,43 +225,43 @@ def menuSpedTest(stdscr):
         stdscr.addstr(start_y, start_x, menu_speed_test[2])
         stdscr.addstr(start_y+1, start_x, menu_speed_test[3])
         stdscr.addstr(start_y+2, start_x, menu_speed_test[4])
+        stdscr.addstr(start_y+3, start_x, menu_speed_test[5])
     except curses.error:
         stdscr.addstr(1, 0, menu_speed_test[0])
         stdscr.addstr(2, 0, menu_speed_test[1])
         stdscr.addstr(3, 0, menu_speed_test[2])
         stdscr.addstr(4, 0, menu_speed_test[3])
         stdscr.addstr(5, 0, menu_speed_test[4])
-
+        stdscr.addstr(6, 0, menu_speed_test[5])
     # Цикл для обработки пользовательского ввода в меню
     while True:
         key = stdscr.getkey()
 
         if key == "1":  # Тест на 1 минуту
             menu_with_results(stdscr, start_spelling(stdscr, 60))
-
-            while True:
-                key = stdscr.getkey()
-                if key == "1":
-                    menu_with_results(stdscr, start_spelling(stdscr, 60))
-                elif key == "2":
-                    menuSpedTest(stdscr)
-
+            main_menu_loop(stdscr)
         elif key == "2":
             menu_with_results(stdscr, start_spelling(stdscr, 30))
-            while True:
-                key = stdscr.getkey()
-                if key == "1":
-                    menu_with_results(stdscr, start_spelling(stdscr, 30))
-                elif key == "2":
-                    menuSpedTest(stdscr)  # Возврат в меню
+            main_menu_loop(stdscr)
         elif key == "3":
             main(stdscr)  # Возврат в главное меню
         elif key == "4":
             sys.exit(0)  # Завершение программы
+        elif key == "5":
+            information_about_typos(stdscr)
         else:
             stdscr.addstr(1, 1,
                           "What the fuck did you press",
                           curses.color_pair(1))
+
+
+def main_menu_loop(stdscr):
+    while True:
+        key = stdscr.getkey()
+        if key == "1":
+            menu_with_results(stdscr, start_spelling(stdscr, 30))
+        elif key == "2":
+            menuSpedTest(stdscr) # Возврат в меню
 
 
 def text_print(stdscr, _text):
@@ -377,6 +430,7 @@ def start_spelling(stdscr, duration=30000):
                 x += 1
 
             elif len(text) == index:
+                analy.final()
                 return (
                     elapsed_time,
                     percentage_correctness(text, new_text),
@@ -413,6 +467,8 @@ def main(stdscr):
             menuSpedTest(stdscr)  # Открытие меню тестов
         elif key == "4":
             sys.exit(0)
+        elif key == "5":
+            information_about_typos(stdscr)
 
 
 if __name__ == "__main__":
