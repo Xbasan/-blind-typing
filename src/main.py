@@ -32,17 +32,17 @@ LOGO = [
     " ::       ::   :::  :::: ::      ::     ::        ::   ::   ::   ::: ::::  :: ::::   ::   :::  :::: :: ",
     " :         :   : :  :: : :       :      :         :    ::    :    :: :: :  : :: ::    :   : :  :: : :  ",
     "",
-    "┌──────────────┐",
-    "│   Hi press   │",
-    "├──────────────┤",
-    "│   1 ─ start  │",
-    "├──────────────┤",
-    "│   2 ─ test   │",
-    "├──────────────┤",
-    "│ 5 ─ Analytic │",
-    "├──────────────┤",
-    "│   4 ─ close  │",
-    "└──────────────┘"
+    "╔══════════════╗",
+    "║   Hi press   ║",
+    "╠══════════════╣",
+    "║   1 ─ start  ║",
+    "╠══════════════╣",
+    "║   2 ─ test   ║",
+    "╠══════════════╣",
+    "║ 5 ─ Analytic ║",
+    "╠══════════════╣",
+    "║   4 ─ close  ║",
+    "╚══════════════╝"
 ]
 
 # Инициализация объекта для сбора аналитики
@@ -62,7 +62,6 @@ def text_genirate(num_words: int):
     """
     home_path = os.path.expanduser("~")
     path = f"{home_path}/.config/blind-typing/test.txt"
-
     with open(path, "r", encoding="utf-8") as fl:
         texts = fl.readlines()
     res_text = random.choice(texts)
@@ -126,8 +125,9 @@ def information_about_typos(stdscr):
                                key=lambda item: item[1],
                                reverse=True))
         for ke in sort_sim:
-            str_elim = f"    {sim}    │     {ke}    │   {date[sim][ke]} "
+            str_elim = f"║{sim:^9}║{ke:^10}║{date[sim][ke]:^7}║"
             lines.append(str_elim)
+        lines.append("╠═════════╬══════════╬═══════╣")
 
     current_line = 0
     max_x, max_y = stdscr.getmaxyx()
@@ -135,19 +135,20 @@ def information_about_typos(stdscr):
     # Цикл отображения с возможностью прокрутки
     while True:
         stdscr.clear()
-        stdscr.addstr(0, 1, "Prev cmds work here too 'q'")
-        stdscr.addstr(1, 1, "│ Correct │ Mistyped │ Count │")
-        stdscr.addstr(2, 1, "├─────────┼──────────┼───────┤")
+        stdscr.addstr(0, 1, "  Prev cmds work here too 'q' ",
+                      curses.color_pair(2))
+        stdscr.addstr(1, 1, "╔═════════╦══════════╦═══════╗")
+        stdscr.addstr(2, 1, "║ Correct ║ Mistyped ║ Count ║")
+        stdscr.addstr(3, 1, "╠═════════╬══════════╬═══════╣")
 
         # Отображение видимой части списка
         for idx, line in enumerate(lines[current_line: current_line + max_y]):
             try:
-                stdscr.addstr(idx + 3, 2, line[:max_x - 2])
+                stdscr.addstr(idx + 4, 1, line)
             except curses.error:
                 pass
 
         stdscr.refresh()
-
         key = stdscr.getch()
 
         if key == curses.KEY_UP:
