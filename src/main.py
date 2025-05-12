@@ -65,7 +65,7 @@ def text_genirate(num_words: int):
     with open(path, "r", encoding="utf-8") as fl:
         texts = fl.readlines()
     res_text = random.choice(texts)
-    maskc = re.compile(r"\b\w{2,}\b")
+    maskc = re.compile(r"\b[\w.,]{1,}\b")
     res = " ".join(maskc.findall(res_text)[0:int(num_words)])
     return len(res), res
 
@@ -116,18 +116,22 @@ def information_about_typos(stdscr):
     stdscr.keypad(True)
 
     date = analy.get_key()  # Получение данных аналитики
-
     lines = []
+    intermediate = "╠═════════╬══════════╬═══════╬════════╣"
     # Формирование строк для отображения статистики
     for sim in date:
         sort_sim = dict(
                         sorted(date[sim].items(),
                                key=lambda item: item[1],
                                reverse=True))
-        for ke in sort_sim:
-            str_elim = f"║{sim:^9}║{ke:^10}║{date[sim][ke]:^7}║"
-            lines.append(str_elim)
-        lines.append("╠═════════╬══════════╬═══════╣")
+        sum_ke = 0
+        for i, ke in enumerate(sort_sim):
+            s = f"{sum_ke if (len(sort_sim)-1 == i) else ' '}"
+            # if date[sim][ke] >= 1:
+            lines.append(f"║{sim:^9}║{ke:^10}║{date[sim][ke]:^7}║{s:^8}║")
+            sum_ke += date[sim][ke]
+        if lines[-1] != intermediate:
+            lines.append(intermediate)
 
     current_line = 0
     max_x, max_y = stdscr.getmaxyx()
@@ -137,9 +141,9 @@ def information_about_typos(stdscr):
         stdscr.clear()
         stdscr.addstr(0, 1, "  Prev cmds work here too 'q' ",
                       curses.color_pair(2))
-        stdscr.addstr(1, 1, "╔═════════╦══════════╦═══════╗")
-        stdscr.addstr(2, 1, "║ Correct ║ Mistyped ║ Count ║")
-        stdscr.addstr(3, 1, "╠═════════╬══════════╬═══════╣")
+        stdscr.addstr(1, 1, "╔═════════╦══════════╦═══════╦════════╗")
+        stdscr.addstr(2, 1, "║ Correct ║ Mistyped ║ Count ║ CountS ║")
+        stdscr.addstr(3, 1, "╠═════════╬══════════╬═══════╬════════╣")
 
         # Отображение видимой части списка
         for idx, line in enumerate(lines[current_line: current_line + max_y]):

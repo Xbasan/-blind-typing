@@ -32,7 +32,7 @@ class Analytics():
             correct_symbol: символ, который должен был быть введен
             key: символ, который ввел пользователь
         """
-        if correct_symbol not in key:  # Если символы не совпадают
+        if correct_symbol not in key:
             if correct_symbol not in self._analytics_data:
                 self._analytics_data[correct_symbol] = {}
             if key not in self._analytics_data[correct_symbol]:

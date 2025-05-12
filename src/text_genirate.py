@@ -1,27 +1,33 @@
 import re
 import os
 import random
+import PyPDF2
+
 
 def main():
     path = "./text"
 
     list_file = os.listdir(path)
 
-    res_str_ob = re.compile(r"[A-Z][^`,\,^,:,=,(,),0-9,~]{249,349}\s")
+    res_str_ob = re.compile(r"[A-Z][^`\~]{200,400}\s")
     string = ""
 
     for file in list_file:
-        with open("./text/"+file, "r", encoding="utf-8") as txt:
-            res = " ".join("".join(txt.readlines()).split())
+        with open("./text/"+file, "rb") as txt:
+            reader = PyPDF2.PdfReader(txt)
+            res = ""
 
-        string += res_str_ob.findall(res)
+            for page in reader.pages:
+                res += page.extract_text()
+            res = " ".join(res.split("\n"))
+            print(res)
+        string += "\n".join(res_str_ob.findall(re.sub(r"\s+", " ", res)))
 
-    for i in string:
-        print(i)
-        print("")
+    string = re.sub(r'"\\u[0-9a-fA-F]{4}"', "", string)
+    print(string)
 
-    with open("text/test.txt", "w+") as txt:
-        txt.write("\n".join(string))
+    with open("test/test.txt", "w+") as txt:
+        txt.write(string)
 
 
 def text_genirate():
@@ -54,5 +60,4 @@ def bly():
     return texts
 
 
-print(bly())
-
+main()
