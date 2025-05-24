@@ -63,12 +63,18 @@ def text_genirate(num_words: int):
         tuple: (длина текста, сгенерированный текст)
     """
     home_path = os.path.expanduser("~")
-    path = f"{home_path}/.config/blind-typing/test.txt"
+    path = os.path.join(home_path, ".config/blind-typing/test.txt")
     with open(path, "r", encoding="utf-8") as fl:
         texts = fl.readlines()
     res_text = random.choice(texts)
     maskc = re.compile(r"\b[\w.,()\[\]{}]{1,}\b")
-    res = " ".join(maskc.findall(res_text)[0:int(num_words)])
+    words = maskc.findall(res_text)
+    if len(words) >= num_words:
+        text_len = random.randint(num_words, len(words))
+    else:
+        words += maskc.findall(random.choice(texts))[0:len(words)-num_words]
+        text_len = random.randint(num_words, len(words))
+    res = " ".join(words[text_len-num_words:text_len])
     return len(res), res
 
 
@@ -283,7 +289,7 @@ async def main_menu_loop(stdscr, time: int):
         if key == "1":    # Повторить тест
             menu_with_results(stdscr, await start_spelling(stdscr, time))
         elif key == "2":  # Вернуться в меню тестов
-            menuSpedTest(stdscr)
+            await menuSpedTest(stdscr)
 
 
 async def text_print(stdscr, _text: str, pause=False):
@@ -303,8 +309,8 @@ async def text_print(stdscr, _text: str, pause=False):
         stdscr.addstr(start_y + y, start_x + x, _key)
         stdscr.refresh()
         x += 1
-        if pause:
-            await asyncio.sleep(0.05)
+        # if pause:
+        # await asyncio.sleep(0.03)
 
 
 def length_selection_menu(stdscr):
