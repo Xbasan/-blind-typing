@@ -46,7 +46,7 @@ LOGO = [
     "╚══════════════╝"
 ]
 
-LINE_LENGTH = 80
+LINE_LENGTH = 76
 # Инициализация объекта для сбора аналитики
 analy = Analytics()
 
@@ -67,13 +67,14 @@ def text_genirate(num_words: int):
     with open(path, "r", encoding="utf-8") as fl:
         texts = fl.readlines()
     res_text = random.choice(texts)
-    maskc = re.compile(r"\b[\w.,()\[\]{}]{1,}\b")
+    maskc = re.compile(r"\w[\w.,()\[\]{}]*")
     words = maskc.findall(res_text)
-    if len(words) >= num_words:
-        text_len = random.randint(num_words, len(words))
-    else:
-        words += maskc.findall(random.choice(texts))[0:len(words)-num_words]
-        text_len = random.randint(num_words, len(words))
+    while True:
+        if len(words) >= num_words:
+            text_len = random.randint(num_words, len(words))
+            break
+        else:
+            words += maskc.findall(random.choice(texts))[0:len(words)-num_words]
     res = " ".join(words[text_len-num_words:text_len])
     return len(res), res
 
