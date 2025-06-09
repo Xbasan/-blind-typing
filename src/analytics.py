@@ -14,8 +14,10 @@ class Analytics():
         super().__init__()
         self._home_dir = os.path.expanduser("~")
         self._path = "/.config/blind-typing/analyticsData.json"
+        self.analitict_one_test = {}
         try:
             # Попытка загрузить существующие данные
+            # print(f"{self._home_dir}{self._path}")
             with open(f"{self._home_dir}{self._path}", "r") as file:
                 self._analytics_data = json.load(file)
         except IOError:
@@ -37,7 +39,24 @@ class Analytics():
                 self._analytics_data[correct_symbol] = {}
             if key not in self._analytics_data[correct_symbol]:
                 self._analytics_data[correct_symbol][key] = 0
-            self._analytics_data[correct_symbol][key] += 1
+        self._analytics_data[correct_symbol][key] += 1
+        self.set_key_one(correct_symbol, key)
+
+    def set_key_one(self, correct_symbol: str, key: str):
+        """
+        Записывает статистику по ошибке ввода.
+        Увеличивает счетчик для пары (правильный символ, введенный символ).
+
+        Args:
+            correct_symbol: символ, который должен был быть введен
+            key: символ, который ввел пользователь
+        """
+
+        if correct_symbol not in self.analitict_one_test:
+            self.analitict_one_test[correct_symbol] = {}
+        if key not in self.analitict_one_test[correct_symbol]:
+            self.analitict_one_test[correct_symbol][key] = 0
+        self.analitict_one_test[correct_symbol][key] += 1
 
     def final(self):
         """
@@ -57,7 +76,9 @@ class Analytics():
         Returns:
             dict: словарь с статистикой ошибок
         """
-        return self._analytics_data
+        res = self.analitict_one_test
+        self.analitict_one_test = {}
+        return res
 
 
 if __name__ == "__main__":

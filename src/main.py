@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# !/usr/bin/env python3
 
 """
 main.py
@@ -19,6 +19,7 @@ import random
 import asyncio
 from curses import wrapper
 from analytics import Analytics
+from schedule import schedule
 
 # Стартовый экран приложения - ASCII-арт логотипа и меню
 LOGO = [
@@ -47,6 +48,7 @@ LOGO = [
 ]
 
 LINE_LENGTH = 76
+DEFOLT_TIME = 30000
 # Инициализация объекта для сбора аналитики
 analy = Analytics()
 
@@ -74,7 +76,7 @@ def text_genirate(num_words: int):
             text_len = random.randint(num_words, len(words))
             break
         else:
-            words += maskc.findall(random.choice(texts))[0:len(words)-num_words]
+            words += maskc.findall(random.choice(texts))[:len(words)-num_words]
     res = " ".join(words[text_len-num_words:text_len])
     return len(res), res
 
@@ -94,12 +96,11 @@ def text_check(_text: str, _new_text: str, ind) -> int:
             4 - правильный регистр,
             1 - ошибка)
     """
-    analy.set_key(_text[ind], _new_text[ind])
-    if _text[ind] == _new_text[ind]:
+    correct = str(_text[ind])
+    new_correct = str(_new_text[ind])
+    if correct == new_correct:
         return 3
-    elif str.upper(_text[ind]) == str.upper(_new_text[ind]):
-        return 4
-    return 1
+    return 4 if str.upper(correct) == str.upper(new_correct) else 1
 
 
 def percentage_correctness(_text: str, res: str) -> int:
@@ -119,6 +120,47 @@ def percentage_correctness(_text: str, res: str) -> int:
     return (per / len(_text)) * 100
 
 
+def schedule_print(stdscr):
+    stdscr.clear()
+    stdscr.keypad(True)
+
+    max_x, max_y = stdscr.getmaxyx()
+    data = schedule(analy.get_key())
+    lines = []
+    intermediate = "═" * (max_y-20)
+    for _key in data:
+        lines.append(f"╔═════╦{intermediate}╗")
+        lines.append(f"║{_key if _key != ' ' else 'space':^5}║" + " "*(max_y-20) + "║")
+        lines.append(f"╠══════{intermediate}╝")
+        for line in data[_key]:
+            lines.append(f"║{line}")
+        lines.append(f"╚══════{intermediate}╝")
+    current_line = 0
+
+    while True:
+        stdscr.clear()
+        stdscr.addstr(0, 1, "  Prev cmds work here too 'q' ",
+                      curses.color_pair(2))
+
+        for idx, line in enumerate(lines[current_line: current_line + max_y]):
+            try:
+                stdscr.addstr(idx + 1, 0, line)
+            except curses.error:
+                pass
+
+        stdscr.refresh()
+        key = stdscr.getch()
+
+        if key == curses.KEY_UP:
+            if current_line > 0:
+                current_line -= 1
+        elif key == curses.KEY_DOWN:
+            if current_line < len(lines) - 2:
+                current_line += 1
+        elif key in (ord("q"), 27):
+            break
+
+
 def information_about_typos(stdscr):
     """
     Отображает статистику по ошибкам ввода в виде прокручиваемого списка.
@@ -128,7 +170,7 @@ def information_about_typos(stdscr):
     stdscr.clear()
     stdscr.keypad(True)
 
-    date = analy.get_key()  # Получение данных аналитики
+    date = analy._analytics_data  # Получение данных аналитики
     lines = []
     intermediate = "╠═════════╬══════════╬═══════╬════════╣"
     # Формирование строк для отображения статистики
@@ -140,7 +182,6 @@ def information_about_typos(stdscr):
         sum_ke = 0
         for i, ke in enumerate(sort_sim):
             s = f"{sum_ke if (len(sort_sim)-1 == i) else ' '}"
-            # if date[sim][ke] >= 1:
             lines.append(f"║{sim:^9}║{ke:^10}║{date[sim][ke]:^7}║{s:^8}║")
             sum_ke += date[sim][ke]
         if lines[-1] != intermediate:
@@ -176,14 +217,6 @@ def information_about_typos(stdscr):
                 current_line += 1
         elif key in (ord("q"), 27):
             break
-    # for inte, sim in enumerate(date):
-    #     str_elim = f"{sim} : {dict(
-    #                                sorted(
-    #                                       date[sim].items(),
-    #                                       key=lambda item: item[1],
-    #                                       reverse=True)
-    #                            )}"
-    #     stdscr.addstr(inte+1, 2, str_elim)
 
 
 def menu_with_results(stdscr, res):
@@ -200,6 +233,17 @@ def menu_with_results(stdscr, res):
     stdscr.addstr(4, 5, f"Corrections :: {cor:.2f}% {res[2][0]}/{res[2][1]}")
     stdscr.addstr(5, 5, "1 : Click to try again")
     stdscr.addstr(6, 5, "2 : Press to return to menu")
+    stdscr.addstr(7, 5, "5 : Analytics")
+
+
+# async def analytics_print(stdscr):
+#     """
+#     Форматирует пипичатае двнные рдного теста
+#     """
+#     stdscr.clear()
+#     date = analy.get_key() 
+#     for i, g in enumerate(date):
+#         stdscr.addstr(i, 1, f"{g} ⣿ {date[g]}")
 
 
 def MainMenu(stdscr):
@@ -211,7 +255,6 @@ def MainMenu(stdscr):
 
     # Центрированное отображение логотипа и меню
     for num, item in enumerate(LOGO):
-        print(num)
         start_x = (width - len(item)) // 2
         start_y = height // 2
         stdscr.addstr(start_y+num-12, start_x, item)
@@ -265,10 +308,10 @@ async def menuSpedTest(stdscr):
 
         if key == "1":    # Тест на 1 минуту
             menu_with_results(stdscr, await start_spelling(stdscr, 60))
-            await main_menu_loop(stdscr, 60)
+            await main_menu_loop(stdscr, 60, 2)
         elif key == "2":  # Тест на 30 секунд
             menu_with_results(stdscr, await start_spelling(stdscr, 30))
-            await main_menu_loop(stdscr, 30)
+            await main_menu_loop(stdscr, 30, 2)
         elif key == "3":  # Возврат в главное меню
             await async_main(stdscr)
         elif key == "4":  # Выход
@@ -281,16 +324,21 @@ async def menuSpedTest(stdscr):
                           curses.color_pair(1))
 
 
-async def main_menu_loop(stdscr, time: int):
+async def main_menu_loop(stdscr, time: int, test_type=1):
     """
-    Цикл обработки ввода в главном меню после завершения теста.
+    Цикл обработки ввода в меню после завершения теста.
     """
     while True:
         key = stdscr.getkey()
         if key == "1":    # Повторить тест
             menu_with_results(stdscr, await start_spelling(stdscr, time))
         elif key == "2":  # Вернуться в меню тестов
-            await menuSpedTest(stdscr)
+            if test_type == 1:
+                await async_main(stdscr)
+            elif test_type == 2:
+                await menuSpedTest(stdscr)
+        elif key == "5":
+            schedule_print(stdscr)
 
 
 async def text_print(stdscr, _text: str, pause=False):
@@ -298,16 +346,13 @@ async def text_print(stdscr, _text: str, pause=False):
     Отображает текст для набора с переносами строк
     (макс. {LINE_LENGTH} символов в строке).
     """
-    # Расчёт начальной позиции текста
-    start_x = (stdscr.getmaxyx()[1] - LINE_LENGTH) // 2
-    start_y = (stdscr.getmaxyx()[0] - 5) // 2
     x = 0
     y = 0
     for i, _key in enumerate(_text):
         if x >= LINE_LENGTH and _text[i-1] == " ":  # Перенос на новую строку
             y += 1
             x = 0
-        stdscr.addstr(start_y + y, start_x + x, _key)
+        stdscr.addstr(START_Y + y, START_X + x, _key)
         stdscr.refresh()
         x += 1
         # if pause:
@@ -371,15 +416,13 @@ async def key_delete(stdscr, _text: str, n_text: str, y: int, x: int):
                                                    _text,
                                                    new_text,
                                                    _index
-                                               )
-                                    )
-                  )
+                                               )))
         _x += 1
 
     return new_text, _x, ln
 
 
-async def start_spelling(stdscr, duration=30000):
+async def start_spelling(stdscr, duration=DEFOLT_TIME):
     """
     Основная функция тестирования набора текста.
     Управляет процессом набора, подсчетом времени и статистики.
@@ -388,20 +431,17 @@ async def start_spelling(stdscr, duration=30000):
         duration: Продолжительность теста в секундах
     Returns:
         tuple: (затраченное время, процент правильности,
-               (кол-во исправлений, длина текста))
+                   (кол-во исправлений, длина текста))
     """
     line_length, text = text_genirate(length_selection_menu(stdscr))
     line_id = 0
     new_text = ""
     corrections = 0  # Счетчик исправлений
-
-    start_x = (stdscr.getmaxyx()[1] - LINE_LENGTH) // 2
-    start_y = (stdscr.getmaxyx()[0] - 5) // 2
     x = 0
 
     stdscr.clear()
 
-    stdscr.addstr(1, 5, f"{len(text)}")
+    stdscr.addstr(1, 5, f"{line_length}")
     await text_print(stdscr, text, pause=True)
 
     start_time = time.time()
@@ -428,15 +468,15 @@ async def start_spelling(stdscr, duration=30000):
                                               stdscr,
                                               text,
                                               new_text,
-                                              start_y,
-                                              start_x
+                                              START_Y,
+                                              START_X
                                           )
             corrections += 1
         elif len(key) == 1:  # Обработка ввода символа
             if key == "\n":
                 key = " "    # Замена Enter на пробел
 
-            if len(key) == 1 and len(text) != index:
+            if len(text) != index:
                 new_text += key
                 # Перенос строки
                 if x >= LINE_LENGTH and new_text[index-1] == " ":
@@ -444,12 +484,13 @@ async def start_spelling(stdscr, duration=30000):
                     x = 0
 
                 # Отображение символа с подсветкой
-                stdscr.addstr(start_y+line_id,
-                              start_x+x,
+                stdscr.addstr(START_Y+line_id,
+                              START_X+x,
                               key,
                               curses.color_pair(text_check(text,
                                                            new_text,
                                                            index)))
+                analy.set_key(text[index], new_text[index])
                 x += 1
 
             elif len(text) == index:  # Весь текст набран
@@ -466,6 +507,25 @@ async def async_main(stdscr):
     """
     Главная функция, инициализирует curses и запускает главное меню.
     """
+    stdscr.clear()
+    MainMenu(stdscr)
+    stdscr.refresh()
+
+    # Обработка выбора в главном меню
+    while True:
+        key = stdscr.getkey()
+        if key == "1":  # Запуск треножора
+            menu_with_results(stdscr, await start_spelling(stdscr))
+            await main_menu_loop(stdscr, time=DEFOLT_TIME)
+        elif key == "2":  # Меню тестов
+            await menuSpedTest(stdscr)
+        elif key == "4":  # Выход
+            sys.exit(0)
+        elif key == "5":  # Аналитика
+            information_about_typos(stdscr)
+
+
+def main(stdscr):
     curses.curs_set(0)  # Скрытие курсора
     # Инициализация цветовых пар:
     # 1 - ошибка (зеленый на красном)
@@ -477,31 +537,10 @@ async def async_main(stdscr):
     curses.init_pair(3, curses.COLOR_BLACK, curses.COLOR_GREEN)
     curses.init_pair(4, curses.COLOR_BLACK, curses.COLOR_YELLOW)
 
-    stdscr.clear()
-    MainMenu(stdscr)
-    stdscr.refresh()
-
-    # Обработка выбора в главном меню
-    while True:
-        key = stdscr.getkey()
-        if key == "1":  # Запуск треножора
-            menu_with_results(stdscr, await start_spelling(stdscr))
-            while True:
-                key = stdscr.getkey()
-                if key == "1":    # Повторить
-                    menu_with_results(stdscr, await start_spelling(stdscr))
-                elif key == "2":  # В главное меню
-                    await async_main(stdscr)
-
-        elif key == "2":  # Меню тестов
-            await menuSpedTest(stdscr)
-        elif key == "4":  # Выход
-            sys.exit(0)
-        elif key == "5":  # Аналитика
-            information_about_typos(stdscr)
-
-
-def main(stdscr):
+    global START_X
+    START_X = (stdscr.getmaxyx()[1] - LINE_LENGTH) // 2
+    global START_Y
+    START_Y = (stdscr.getmaxyx()[0] - 5) // 2
     asyncio.run(async_main(stdscr))
 
 
